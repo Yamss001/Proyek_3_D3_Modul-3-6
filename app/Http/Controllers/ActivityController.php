@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\UpdateActivityRequest;
+use App\Http\Requests\StoreActivityRequest;
+use App\Models\Activity;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+
+class ActivityController extends Controller
+{
+    public function index(): View
+    {
+        $activities = Activity::query()
+            ->orderBy('activity_date')
+            ->get();
+
+        return view('activities.index', compact('activities'));
+    }
+
+    public function create(): View
+    {
+        return view('activities.create');
+    }
+
+    public function store(StoreActivityRequest $request): RedirectResponse
+    {
+        $activity = Activity::create($request->validated());
+
+        return redirect()->route('activities.show', $activity)
+            ->with('success', 'Kegiatan berhasil dibuat.');
+    }
+
+    public function show(Activity $activity): View
+    {
+        return view('activities.show', compact('activity'));
+    }
+
+    public function edit(Activity $activity): View
+    {
+        return view('activities.edit', compact('activity'));
+    }
+
+    public function update(UpdateActivityRequest $request, Activity $activity)
+    {
+        $request->validate([
+            'title' => ['required', 'min:5', 'max:100'],
+            'status' => ['required'],
+        ]);
+        if ($activity->status === 'Done' && $request->status === 'Planned') {
+
+            return back()->withErrors([
+                'status' => 'Status tidak boleh mundur.',
+            ]);
+
+        }
+
+        if (! in_array($request->status, ['Planned', 'Ongoing', 'Done'])) {
+            return back()->withErrors(['status' => 'Status tidak dikenal.']);
+
+        }
+        $activity->title = $request->title;
+        $activity->status = $request->status;
+        $activity->save();
+
+        return redirect('/activities/'.$activity->id)
+            ->with('success', 'Data diperbarui.');
+    }
+
+    public function destroy(Activity $activity): RedirectResponse
+    {
+        $activity->delete();
+
+        return redirect()->route('activities.index')
+            ->with('success', 'Kegiatan berhasil dihapus.');
+    }
+}
