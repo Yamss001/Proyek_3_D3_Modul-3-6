@@ -1,6 +1,19 @@
 <br>
     <a href="{{ route('activities.edit', $activity) }}">Ubah Kegiatan</a>
-    
+    @if ($activity->status === 'draft')
+    <form action="{{ route('activities.publish', $activity) }}" method="POST">
+        @csrf
+        @method('PATCH')
+        <button type="submit">Publish</button>
+    </form>
+    @endif
+    @if ($activity->status === 'published')
+    <form action="{{ route('activities.complete', $activity) }}" method="POST">
+        @csrf
+        @method('PATCH')
+        <button type="submit">Complete</button>
+    </form>
+    @endif
     <form action="{{ route('activities.destroy', $activity) }}" method="POST" style="display:inline;">
         @csrf
         @method('DELETE')
